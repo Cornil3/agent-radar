@@ -1,0 +1,30 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/"
+      ]
+    },
+    "github": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ],
+      "env": {
+        "GITHUB_TOKEN": "ghp_FAKE0000111122223333444455556666aaaa"
+      }
+    },
+    "docs": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-docs",
+        "--read-only"
+      ]
+    }
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "k8s": {
+      "command": "uvx",
+      "args": [
+        "mcp-server-kubernetes",
+        "--read-only"
+      ]
+    },
+    "legacy-crm": {
+      "command": "/usr/local/bin/crm-mcp",
+      "args": [
+        "--token",
+        "ghp_FAKE7777888899990000bbbbccccddddeeee"
+      ]
+    }
+  }
+}
