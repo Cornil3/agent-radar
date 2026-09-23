@@ -142,7 +142,9 @@ function showDetails(agentId, row) {
   html += "<div>Runs</div><div><code>" + escapeHtml(commandLine(agent)) + "</code></div>";
   html += "<div>Owners</div><div>" + escapeHtml(agent.owners.join(", ")) + "</div>";
   html += "<div>Machines</div><div>" + escapeHtml(agent.devices.join(", ")) + "</div>";
-  html += "<div>Configured in</div><div>" + escapeHtml(agent.config_paths.join("<br>")) + "</div>";
+  const paths = [];
+  for (const path of agent.config_paths) paths.push(escapeHtml(path));
+  html += "<div>Configured in</div><div>" + paths.join("<br>") + "</div>";
   html += "<div>Env variables</div><div>" +
           (agent.env_keys.length ? escapeHtml(agent.env_keys.join(", ")) : "<span class='muted'>none</span>") +
           "</div>";
