@@ -1,0 +1,14 @@
+# Folders to leave out when scanning this computer ("This computer" in the console).
+# One pattern per line. A line matches if it appears anywhere in a folder's path,
+# relative to your home folder. Lines starting with # are ignored.
+#
+# Copy this file to excludes.txt and edit it.
+
+# Claude Code keeps a copy of every file a session reads, plus transcripts.
+# Those copies contain whatever the session saw, so they light up a scan.
+.claude/file-history
+.claude/projects
+
+# Test fixtures and sample data, which contain fake configs and fake keys.
+# fixtures
+# sample

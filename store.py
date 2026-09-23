@@ -29,8 +29,25 @@ def setup():
         CREATE TABLE IF NOT EXISTS credentials (
             fingerprint TEXT PRIMARY KEY,
             type TEXT, locations TEXT, first_seen TEXT, last_seen TEXT)""")
+    connection.execute("CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT)")
     connection.commit()
     connection.close()
+
+
+def set_meta(key, value):
+    connection = connect()
+    connection.execute("INSERT OR REPLACE INTO meta VALUES (?, ?)", (key, str(value)))
+    connection.commit()
+    connection.close()
+
+
+def get_meta(key, default=""):
+    connection = connect()
+    row = connection.execute("SELECT value FROM meta WHERE key = ?", (key,)).fetchone()
+    connection.close()
+    if row is None:
+        return default
+    return row["value"]
 
 
 def merge_lists(stored_json, new_values):

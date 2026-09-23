@@ -80,7 +80,8 @@ def stats():
             risky += 1
     return {"agents": len(agents), "risky_agents": risky,
             "credentials": len(store.get_credentials()),
-            "devices": count_devices(agents)}
+            "devices": count_devices(agents),
+            "source": store.get_meta("source", "sample")}
 
 
 def count_devices(agents):
@@ -93,8 +94,15 @@ def count_devices(agents):
 
 
 @app.post("/api/rescan")
-def rescan():
-    """Scan every machine in sample/ again. Handy for the demo."""
+def rescan(source: str = "sample"):
+    """Fill the console from one of two places.
+
+    source=sample   the three fake machines in sample/ (the demo)
+    source=machine  this computer, for real
+    """
+    if source == "machine":
+        return scan_this_machine()
+
     if not os.path.isdir(SAMPLE_FOLDER):
         raise HTTPException(400, "no sample folder - run: python make_sample.py")
 
@@ -105,7 +113,39 @@ def rescan():
         if os.path.isdir(home):
             store.merge_report(scan.scan_machine(home))
             scanned.append(name)
-    return {"scanned": scanned}
+    store.set_meta("source", "sample")
+    return {"source": "sample", "scanned": scanned}
+
+
+def read_excludes():
+    """Folders to leave out of a real scan, one per line in excludes.txt."""
+    patterns = []
+    path = os.path.join(HERE, "excludes.txt")
+    if not os.path.exists(path):
+        return patterns
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith("#"):
+                patterns.append(line)
+    return patterns
+
+
+def scan_this_machine():
+    """Scan the home folder of whoever is running this."""
+    home = os.path.expanduser("~")
+
+    # Don't report our own sample machines as if they were real agents.
+    excludes = read_excludes()
+    relative = os.path.relpath(HERE, home)
+    if not relative.startswith(".."):
+        excludes.append(relative.replace("\\", "/"))
+
+    report = scan.scan_machine(home, {"max_seconds": 90, "excludes": excludes})
+    store.clear()
+    store.merge_report(report)
+    store.set_meta("source", "machine")
+    return {"source": "machine", "scanned": [report["device_id"]], "scan": report["scan"]}
 
 
 if __name__ == "__main__":

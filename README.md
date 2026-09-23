@@ -23,8 +23,16 @@ python scan.py sample/laptop-omer  --upload http://127.0.0.1:8000
 python scan.py sample/laptop-eitan --upload http://127.0.0.1:8000
 ```
 
-Open http://127.0.0.1:8000 and you will see ten agents. Or just press **Rescan all
-machines** in the page, which scans everything under `sample/` for you.
+Open http://127.0.0.1:8000 and you will see ten agents.
+
+The page has a switch in the top right:
+
+- **Sample machines** - the three fake laptops in `sample/`. Made-up data, safe to demo.
+- **This computer** - a real scan of your own home folder. Takes up to 90 seconds.
+
+**Rescan** re-runs whichever one is showing. A banner always says which of the two you are
+looking at, because a screenshot of made-up data and a screenshot of a real machine should
+never be confusable.
 
 To see what a scanner sends without a server running:
 
@@ -48,6 +56,38 @@ python -m pytest tests -q
 - **One GitHub token in three places.** `/api/credentials` shows it as a single credential
   with three locations - and only as a fingerprint.
 - Edit a config under `sample/`, press Rescan, and watch the score change.
+
+## Scanning your own computer
+
+```
+python scan.py "C:/Users/you" --out my_machine.json
+python scan.py "C:/Users/you" --upload http://127.0.0.1:8000 --skip-secrets
+```
+
+Flags: `--skip-secrets` (agents only, fast), `--max-seconds N` (budget, default 120),
+`--exclude TEXT` (repeatable), `--out FILE`, `--print`.
+
+Copy `excludes.example.txt` to `excludes.txt` to keep folders out of the **This computer**
+scan. Two entries are there by default, and the reason is worth knowing:
+
+```
+.claude/file-history
+.claude/projects
+```
+
+Claude Code keeps a copy of every file a session reads, plus the session transcript. Open a
+`.env` in a session once and its contents live on under `~/.claude/` afterwards - which is a
+real way secrets spread, and also a way to flood this scan with copies of things you already
+know about.
+
+Two honest notes about any scan:
+
+- It only reads files that plausibly hold text config (`.env`, `.json`, `.yaml`, `.py`,
+  `.sh`, ...). Reading every file on a real machine took 150 seconds to get through 2,336
+  files; with the filter it does ~14,000 in 30.
+- The report carries `files_read`, `seconds` and `stopped_early`. A scan that ran out of
+  time, or that excluded half your disk, is not a clean bill of health, and the tool says so
+  rather than quietly implying otherwise.
 
 ## The three ideas worth knowing
 
@@ -106,3 +146,11 @@ monitoring (what the agent actually did) is a separate piece, and the interestin
 this system knows what an agent *can* do, not what it *did*.
 
 R7 cannot fire in a fresh demo, because every machine has just reported in.
+
+## Where this came from
+
+`PROMPT.md` is the full specification this repo was built from: the data shapes, the rules,
+the milestones and the constraints (plain Python, standard library plus FastAPI, no ORM, no
+Docker, under ~600 lines). The code follows it, with two deliberate additions made while
+building: Claude Code plugins are reported as agents, and the scanner masks secrets out of
+the arguments it sends after a demo showed a token rendered in the console.

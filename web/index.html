@@ -18,6 +18,12 @@
   button:hover { background: #f1f3f6; }
   button.main { background: #2f5bd7; border-color: #2f5bd7; color: #fff; }
   main { padding: 22px 24px 60px; max-width: 1200px; }
+  .switch { display: flex; border: 1px solid #d5d9e0; border-radius: 8px; overflow: hidden; }
+  .switch button { border: 0; border-radius: 0; background: #fff; color: #4b5563; }
+  .switch button + button { border-left: 1px solid #d5d9e0; }
+  .switch button.on { background: #2f5bd7; color: #fff; }
+  #banner { padding: 10px 24px; font-size: 14px; background: #fff7e6; border-bottom: 1px solid #f0e2c8; }
+  #banner:empty { display: none; }
   .stats { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 20px; }
   .stat { background: #fff; border: 1px solid #e2e5ea; border-radius: 10px;
           padding: 12px 18px; min-width: 130px; }
@@ -56,8 +62,13 @@
   <h1>Agent Radar</h1>
   <p>AI agents found on developer machines</p>
   <span class="grow"></span>
-  <button id="rescan" class="main">Rescan all machines</button>
+  <div class="switch">
+    <button id="useSample" data-source="sample">Sample machines</button>
+    <button id="useMachine" data-source="machine">This computer</button>
+  </div>
+  <button id="rescan" class="main">Rescan</button>
 </header>
+<div id="banner"></div>
 
 <main>
   <div class="stats" id="stats"></div>
@@ -72,6 +83,7 @@
 
 <script>
 let agents = [];
+let source = "sample";
 
 function escapeHtml(text) {
   return String(text === null || text === undefined ? "" : text)
@@ -89,9 +101,20 @@ function commandLine(agent) {
   return (agent.command + " " + agent.args.join(" ")).trim();
 }
 
+function showSource() {
+  for (const button of document.querySelectorAll(".switch button")) {
+    button.classList.toggle("on", button.dataset.source === source);
+  }
+  document.getElementById("banner").textContent = source === "machine"
+    ? "Showing THIS computer - a real scan of your home folder."
+    : "Showing the three sample machines in sample/ (made-up data for the demo).";
+}
+
 async function load() {
   const statsResponse = await fetch("/api/stats");
   const stats = await statsResponse.json();
+  source = stats.source || "sample";
+  showSource();
   document.getElementById("stats").innerHTML =
     box(stats.agents, "agents") + box(stats.risky_agents, "risky (70+)") +
     box(stats.devices, "machines") + box(stats.credentials, "credentials");
@@ -167,16 +190,31 @@ function showDetails(agentId, row) {
   details.hidden = false;
 }
 
-document.getElementById("rescan").onclick = async function () {
-  const button = document.getElementById("rescan");
-  button.disabled = true;
-  button.textContent = "Scanning...";
-  await fetch("/api/rescan", { method: "POST" });
-  document.getElementById("details").hidden = true;
-  await load();
-  button.disabled = false;
-  button.textContent = "Rescan all machines";
-};
+async function runScan(wanted) {
+  const buttons = document.querySelectorAll("header button");
+  for (const button of buttons) button.disabled = true;
+  document.getElementById("banner").textContent = wanted === "machine"
+    ? "Scanning your home folder - this takes up to 90 seconds..."
+    : "Scanning the sample machines...";
+
+  try {
+    const response = await fetch("/api/rescan?source=" + wanted, { method: "POST" });
+    const result = await response.json();
+    document.getElementById("details").hidden = true;
+    await load();
+    if (result.scan && result.scan.stopped_early) {
+      document.getElementById("banner").textContent +=
+        " (stopped at the 90 second limit, so this is a partial view)";
+    }
+  } catch (problem) {
+    document.getElementById("banner").textContent = "Scan failed: " + problem;
+  }
+  for (const button of buttons) button.disabled = false;
+}
+
+document.getElementById("rescan").onclick = function () { runScan(source); };
+document.getElementById("useSample").onclick = function () { runScan("sample"); };
+document.getElementById("useMachine").onclick = function () { runScan("machine"); };
 
 load();
 </script>
