@@ -404,20 +404,25 @@ def main():
         return
 
     report = scan_machine(home, read_options())
-    print("scanned", report["scan"]["files_read"], "files in", report["scan"]["seconds"], "seconds")
+
+    # Progress goes to stderr so that --print gives you clean JSON you can pipe.
+    note = sys.stderr
+    print("scanned", report["scan"]["files_read"], "files in",
+          report["scan"]["seconds"], "seconds", file=note)
     if report["scan"]["stopped_early"]:
-        print("(stopped at the time limit - raise it with --max-seconds)")
-    print("found", len(report["agents"]), "agents and", len(report["credentials"]), "credentials")
+        print("(stopped at the time limit - raise it with --max-seconds)", file=note)
+    print("found", len(report["agents"]), "agents and",
+          len(report["credentials"]), "credentials", file=note)
 
     if "--out" in sys.argv:
         out_path = sys.argv[sys.argv.index("--out") + 1]
         with open(out_path, "w", encoding="utf-8") as f:
             json.dump(report, f, indent=2)
-        print("wrote", out_path)
+        print("wrote", out_path, file=sys.stderr)
 
     if "--upload" in sys.argv:
         base_url = sys.argv[sys.argv.index("--upload") + 1]
-        print("server said:", upload(report, base_url))
+        print("server said:", upload(report, base_url), file=sys.stderr)
     elif "--print" in sys.argv:
         print(json.dumps(report, indent=2))
 

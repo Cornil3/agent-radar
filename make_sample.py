@@ -13,7 +13,7 @@ SAMPLE = os.path.join(HERE, "sample")
 FAKE_GITHUB = "ghp_FAKE0000111122223333444455556666aaaa"
 FAKE_GITHUB_2 = "ghp_FAKE7777888899990000bbbbccccddddeeee"
 FAKE_OPENAI = "sk-proj-FAKE000011112222333344445555666677"
-FAKE_AWS = "AKIAFAKE000011112222"
+FAKE_AWS = "AKIAIOSFODNN7EXAMPLE"   # AWS's own documented example key
 
 # The same agent, word for word, on two machines.
 SHARED_FILESYSTEM = {"command": "npx", "args": ["-y", "@modelcontextprotocol/server-filesystem", "/"]}
