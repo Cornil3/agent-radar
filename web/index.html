@@ -110,7 +110,30 @@ function showSource() {
     : "Showing the three sample machines in sample/ (made-up data for the demo).";
 }
 
+function openedAsAFile() {
+  // Double-clicking index.html gives a file:// page, where fetch("/api/...") can never
+  // work: there is no server behind it. Say so instead of failing with "Failed to fetch".
+  if (location.protocol === "http:" || location.protocol === "https:") return false;
+  document.getElementById("banner").innerHTML =
+    "This page was opened straight from disk, so it has no server to talk to. Run " +
+    "<code>python server.py</code> and open <b>http://127.0.0.1:8000</b> instead.";
+  document.getElementById("rows").innerHTML =
+    "<tr><td colspan='7' class='muted'>No server. Open http://127.0.0.1:8000</td></tr>";
+  for (const button of document.querySelectorAll("header button")) button.disabled = true;
+  return true;
+}
+
 async function load() {
+  if (openedAsAFile()) return;
+  try {
+    await refresh();
+  } catch (problem) {
+    document.getElementById("banner").textContent =
+      "Cannot reach the server (" + problem + "). Start it with: python server.py";
+  }
+}
+
+async function refresh() {
   const statsResponse = await fetch("/api/stats");
   const stats = await statsResponse.json();
   source = stats.source || "sample";
@@ -191,6 +214,7 @@ function showDetails(agentId, row) {
 }
 
 async function runScan(wanted) {
+  if (openedAsAFile()) return;
   const buttons = document.querySelectorAll("header button");
   for (const button of buttons) button.disabled = true;
   document.getElementById("banner").textContent = wanted === "machine"
@@ -207,7 +231,8 @@ async function runScan(wanted) {
         " (stopped at the 90 second limit, so this is a partial view)";
     }
   } catch (problem) {
-    document.getElementById("banner").textContent = "Scan failed: " + problem;
+    document.getElementById("banner").textContent =
+      "Scan failed (" + problem + "). Is the server still running? Start it with: python server.py";
   }
   for (const button of buttons) button.disabled = false;
 }
