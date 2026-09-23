@@ -154,3 +154,8 @@ the milestones and the constraints (plain Python, standard library plus FastAPI,
 Docker, under ~600 lines). The code follows it, with two deliberate additions made while
 building: Claude Code plugins are reported as agents, and the scanner masks secrets out of
 the arguments it sends after a demo showed a token rendered in the console.
+
+`PREP.md` is how to defend this build in a room: the four decisions and why, the questions
+to expect, the limits worth volunteering before anyone digs for them. `SESSION.md` is a
+compact record of the session that produced the repo - the course correction, the bugs, and
+what each one taught.
